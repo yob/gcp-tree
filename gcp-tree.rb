@@ -24,7 +24,18 @@
 #        │  └─ Instance name: gke-cluster-foo-pool-b-22bb9925-xs5p type: n1-standard-4 zone: australia-southeast1-a
 #        └─ Google Kubernetes Engine
 #           └─ Cluster name: cluster-foo zone: australia-southeast1-a nodes: 1 master-version: 1.9.6-gke.0
-
+#
+# Resources we could add to the tree:
+#
+# * Datastore
+# * Spanner
+# * Bigtable
+# * Networks
+# * PubSub Topics
+# * Cloud Functions
+# * App Engine
+# * Service Accounts?
+# * Support Contracts
 
 require 'json'
 require 'open3'
