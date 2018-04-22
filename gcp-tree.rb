@@ -89,7 +89,22 @@ projects.each do |project|
       instanceName = instance.fetch("name")
       instanceType = instance.fetch("machineType").split("/").last
       instanceZone = instance.fetch("zone").split("/").last
-      productNode << GcpNode.new("Instance name: #{instanceName} type: #{instanceType} zone: #{instanceZone}")
+      productNode << GcpNode.new("Compute Instance name: #{instanceName} type: #{instanceType} zone: #{instanceZone}")
+    end
+  end
+
+  # Google SQL
+  sql_instances = json_cmd("gcloud -q sql instances list --project #{projectId} --format=json")
+
+  if sql_instances.any?
+    productNode = GcpNode.new("Cloud SQL")
+    projectNode << productNode
+    sql_instances.each do |instance|
+      instanceName = instance.fetch("name")
+      instanceDbVersion = instance.fetch("databaseVersion")
+      instanceTier = instance.fetch("settings").fetch("tier")
+      instanceZone = instance.fetch("gceZone")
+      productNode << GcpNode.new("SQL Instance name: #{instanceName} db: #{instanceDbVersion} zone: #{instanceZone} tier: #{instanceTier}")
     end
   end
 
