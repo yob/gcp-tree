@@ -168,6 +168,18 @@ projects.each do |project|
       productNode << GcpNode.new("Cluster name: #{clusterName} zone: #{clusterZone} nodes: #{clusterNodeCount} master-version: #{clusterMasterVersion}")
     end
   end
+
+  # Pub/Sub
+  topics = json_cmd("gcloud -q pubsub topics list --project #{projectId} --format=json")
+
+  if topics.any?
+    productNode = GcpNode.new("Pub/Sub")
+    projectNode << productNode
+    topics.each do |topic|
+      topicName = topic.fetch("name")
+      productNode << GcpNode.new("Topic name: #{topicName}")
+    end
+  end
 end
 
 def print_node(node, ancestors_last: [])
