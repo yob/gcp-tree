@@ -195,9 +195,9 @@ def print_node(node, ancestors_last: [])
       end
     }
     if ancestors_last.last
-      indent += "└─ " 
+      indent += "└─ "
     else
-      indent += "├─ " 
+      indent += "├─ "
     end
   end
   puts "#{indent}#{node.label}"
