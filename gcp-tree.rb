@@ -52,6 +52,18 @@ rescue JSON::ParserError
   []
 end
 
+def newline_cmd(cmd)
+  stdout, stderr, status = Open3.capture3(cmd)
+
+  if status.success?
+    stdout.split("\n")
+  else
+    []
+  end
+rescue JSON::ParserError
+  []
+end
+
 def fatal(msg)
   $stderr.puts msg
   exit(1)
@@ -101,6 +113,17 @@ projects.each do |project|
       instanceType = instance.fetch("machineType").split("/").last
       instanceZone = instance.fetch("zone").split("/").last
       productNode << GcpNode.new("Compute Instance name: #{instanceName} type: #{instanceType} zone: #{instanceZone}")
+    end
+  end
+
+  # Cloud Storage
+  buckets = newline_cmd("gsutil ls -p #{projectId}")
+
+  if buckets.any?
+    productNode = GcpNode.new("Cloud Storage")
+    projectNode << productNode
+    buckets.each do |bucket|
+      productNode << GcpNode.new("Bucket #{bucket}")
     end
   end
 
