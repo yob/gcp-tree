@@ -31,7 +31,6 @@
 # * Spanner
 # * Bigtable
 # * Networks
-# * PubSub Topics
 # * Cloud Functions
 # * App Engine
 # * Service Accounts?
