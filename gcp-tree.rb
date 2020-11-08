@@ -111,7 +111,9 @@ projects.each do |project|
       instanceName = instance.fetch("name")
       instanceType = instance.fetch("machineType").split("/").last
       instanceZone = instance.fetch("zone").split("/").last
-      productNode << GcpNode.new("Compute Instance name: #{instanceName} type: #{instanceType} zone: #{instanceZone}")
+      licences = instance.fetch("disks").flat_map { |disk| disk.fetch("licenses", []) }.map { |license| license.split("/").last }.join(",")
+      externalIps = instance.fetch("networkInterfaces", []).flat_map { |interface| interface.fetch("accessConfigs", {}) }.map { |config| config.fetch("natIP", nil) }.compact.join(",")
+      productNode << GcpNode.new("Compute Instance name: #{instanceName} type: #{instanceType} zone: #{instanceZone} licenses: #{licences} IPs: #{externalIps}")
     end
   end
 
