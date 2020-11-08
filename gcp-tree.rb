@@ -181,6 +181,33 @@ projects.each do |project|
       productNode << GcpNode.new("Topic name: #{topicName}")
     end
   end
+
+  # Load Balancers
+  forwarding_rules = json_cmd("gcloud -q compute forwarding-rules list --project #{projectId} --format=json")
+
+  if forwarding_rules.any?
+    productNode = GcpNode.new("Forwarding Rules")
+    projectNode << productNode
+    forwarding_rules.each do |rule|
+      ruleName = rule.fetch("name")
+      ruleAddress = rule.fetch("IPAddress")
+      ruleProtocol = rule.fetch("IPProtocol")
+      rulePorts = rule.fetch("portRange")
+      productNode << GcpNode.new("Forwarding Rule name: #{ruleName} IP: #{ruleAddress} Protocol: #{ruleProtocol} ports: #{rulePorts}")
+    end
+  end
+
+  # Public IP Addresses
+  ips = json_cmd("gcloud -q compute addresses list --project #{projectId} --format=json")
+
+  if ips.any?
+    productNode = GcpNode.new("Static IPs")
+    projectNode << productNode
+    ips.each do |ip|
+      address = ip.fetch("address")
+      productNode << GcpNode.new("IP Address #{address}")
+    end
+  end
 end
 
 def print_node(node, ancestors_last: [])
