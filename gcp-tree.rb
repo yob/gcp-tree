@@ -164,7 +164,7 @@ projects.each do |project|
     clusters.each do |cluster|
       clusterName = cluster.fetch("name")
       clusterZone = cluster.fetch("zone")
-      clusterNodeCount = cluster.fetch("currentNodeCount")
+      clusterNodeCount = cluster.fetch("currentNodeCount", 0)
       clusterMasterVersion = cluster.fetch("currentMasterVersion")
       productNode << GcpNode.new("Cluster name: #{clusterName} zone: #{clusterZone} nodes: #{clusterNodeCount} master-version: #{clusterMasterVersion}")
     end
