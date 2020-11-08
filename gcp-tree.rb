@@ -3,7 +3,8 @@
 # Amazingly, Google doesn't appear to provide a way to view all the resources that belong
 # to a GCP organisation.
 #
-# This hacky script is my quick attempt to build that tool.
+# This hacky script is my quick attempt to build that tool. It's a good fit for small orgs with a
+# modest number of projects and resources, but it's not Enterprise Scale.
 #
 # USAGE
 #
