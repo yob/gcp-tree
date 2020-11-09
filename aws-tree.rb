@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
 # Amazingly, AWS doesn't appear to provide a way to view all the resources that belong
-# to a GCP organisation.
+# to an AWS account.
 #
 # This hacky script is my quick attempt to build that tool. It's a good fit for small orgs with a
 # modest number of projects and resources, but it's not Enterprise Scale.
@@ -18,24 +18,27 @@
 #
 # You should get output that looks something like:
 #
-#     Organisation: yob.id.au
-#     ├─ project: unifi (unifi-1521373866918)
-#     └─ project: trial project (macro-incline-193309)
-#        ├─ Compute Engine
-#        │  └─ Instance name: gke-cluster-foo-pool-b-22bb9925-xs5p type: n1-standard-4 zone: australia-southeast1-a
-#        └─ Google Kubernetes Engine
-#           └─ Cluster name: cluster-foo zone: australia-southeast1-a nodes: 1 master-version: 1.9.6-gke.0
+#      Account: Foo (012345678912)
+#      ├─ region: us-east-1
+#      │  └─ EC2
+#      │     ├─ Compute Instance name: foo-bastion id: i-23249ec type: t2.medium zone: us-east-1d IP: 1.2.3.4
+#      │     └─ Compute Instance name: bar id: i-123123ad55 type: m5.large zone: us-east-1d IP:
+#      ├─ region: us-west-1
+#      └─ S3
+#         ├─ Bucket foo
+#         └─ Bucket bar
 #
 # Resources we could add to the tree:
 #
-# * Datastore
-# * Spanner
-# * Bigtable
-# * Networks
-# * Cloud Functions
-# * App Engine
-# * Service Accounts?
-# * Support Contracts
+# * RDS Instances
+# * Route53 Zones
+# * VPCs
+# * Static IPs
+# * Internet Gateways and NAT
+# * ECS clusters
+# * Load Balancers
+# * Cloudformation Stacks
+
 require 'json'
 require 'open3'
 
