@@ -34,14 +34,10 @@
 #
 # Resources we could add to the tree:
 #
-# * RDS Instances
 # * Route53 Zones
 # * VPCs
-# * Static IPs
 # * Internet Gateways and NAT
 # * ECS clusters
-# * Load Balancers
-# * Cloudformation Stacks
 
 require 'json'
 require 'open3'
@@ -122,6 +118,64 @@ regions.each do |region|
       productNode << GcpNode.new("Compute Instance name: #{instanceName} id: #{instanceId} type: #{instanceType} zone: #{instanceZone} IP: #{externalIp}")
     end
   end
+
+  # Elastic Load Balancers
+  result = json_cmd("aws elbv2 describe-load-balancers --region=#{region} --output=json")
+  lbs = result.fetch("LoadBalancers")
+  if lbs.any?
+    productNode = GcpNode.new("Elastic Load Balancers")
+    regionNode << productNode
+    lbs.each do |lb|
+      lbName = lb.fetch("LoadBalancerName")
+      lbDns = lb.fetch("DNSName")
+      lbType = lb.fetch("Type")
+      lbZones = lb.fetch("AvailabilityZones", []).map { |zone| zone.fetch("ZoneName") }.join(",")
+      productNode << GcpNode.new("Load Balancer #{lbName} type: #{lbType} DNS: #{lbDns} zones: #{lbZones}")
+    end
+  end
+
+  # RDS
+  result = json_cmd("aws rds describe-db-instances --region=#{region} --output=json")
+  instances = result.fetch("DBInstances")
+  if instances.any?
+    productNode = GcpNode.new("RDS")
+    regionNode << productNode
+    instances.each do |instance|
+      instanceId = instance.fetch("DBInstanceIdentifier")
+      instanceType = instance.fetch("DBInstanceClass")
+      instanceEngine = instance.fetch("Engine")
+      instanceEngineVersion = instance.fetch("EngineVersion")
+      instanceZone = instance.fetch("AvailabilityZone")
+      instanceZoneSecondary = instance.fetch("SecondaryAvailabilityZone", "-")
+      productNode << GcpNode.new("Database #{instanceId} engine: #{instanceEngine} #{instanceEngineVersion} type: #{instanceType} zone: #{instanceZone}/#{instanceZoneSecondary}")
+    end
+  end
+
+  # Cloud Formation
+  result = json_cmd("aws cloudformation list-stacks --region=#{region} --output=json")
+  stacks = result.fetch("StackSummaries")
+  if stacks.any?
+    productNode = GcpNode.new("Cloudformation")
+    regionNode << productNode
+    stacks.each do |stack|
+      stackName = stack.fetch("StackName")
+      stackStatus = stack.fetch("StackStatus")
+      productNode << GcpNode.new("Stack name: #{stackName} status: #{stackStatus}")
+    end
+  end
+
+  # Elastic IP addresses
+  result = json_cmd("aws ec2 describe-addresses --region=#{region} --output=json")
+  addresses = result.fetch("Addresses")
+  if addresses.any?
+    productNode = GcpNode.new("Elastic IPs")
+    regionNode << productNode
+    addresses.each do |address|
+      ip = address.fetch("PublicIp")
+      productNode << GcpNode.new("Elastic IP #{ip}")
+    end
+  end
+
 end
 
 # S3
