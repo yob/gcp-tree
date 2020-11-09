@@ -94,9 +94,10 @@ regions = regions.split(",")
 caller_identity = json_cmd("aws sts get-caller-identity --output=json")
 account_id = caller_identity.fetch("Account")
 
-account_details = json_cmd("aws organizations describe-account --account-id=#{account_id} --output=json")
+account_aliases = json_cmd("aws iam list-account-aliases --output=json")
+aliases = account_aliases.fetch("AccountAliases", ["unknown"]).join(",")
 
-tree = GcpNode.new("Account: #{account_details.dig("Account", "Name")} (#{account_id})")
+tree = GcpNode.new("Account: #{aliases} (#{account_id})")
 
 regions.each do |region|
 
