@@ -16,6 +16,10 @@
 #
 #     ./aws-tree.rb us-east-1,us-west-1
 #
+# ... or, with aws-vault:
+#
+#     aws-vault exec <profile-name> -- ./aws-tree.rb us-east-1,us-west-1
+#
 # You should get output that looks something like:
 #
 #      Account: Foo (012345678912)
