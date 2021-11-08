@@ -35,8 +35,6 @@
 # Resources we could add to the tree:
 #
 # * Route53 Zones
-# * VPCs
-# * Internet Gateways and NAT
 
 require 'json'
 require 'open3'
@@ -200,6 +198,43 @@ regions.each do |region|
       serviceCount = cluster.fetch("activeServicesCount")
       runningTaskCount = cluster.fetch("runningTasksCount")
       productNode << GcpNode.new("ECS Cluster name: #{name} services: #{serviceCount} running-tasks: #{runningTaskCount}")
+    end
+  end
+
+  # VPCs
+  result = json_cmd("aws ec2 describe-vpcs --region=#{region} --output=json")
+  vpcs = result.fetch("Vpcs")
+  if vpcs.any?
+    productNode = GcpNode.new("VPCs")
+    regionNode << productNode
+    vpcs.each do |vpc|
+      name = vpc.fetch("Tags", []).detect { |row| row["Key"] == "Name" }&.fetch("Value", "") || ""
+      cidr = vpc.fetch("CidrBlock")
+      productNode << GcpNode.new("VPC name: #{name} cidr: #{cidr}")
+    end
+  end
+
+  # Intenet Gateways
+  result = json_cmd("aws ec2 describe-internet-gateways --region=#{region} --output=json")
+  gateways = result.fetch("InternetGateways")
+  if gateways.any?
+    productNode = GcpNode.new("Internet Gateways")
+    regionNode << productNode
+    gateways.each do |gateway|
+      name = gateway.fetch("Tags", []).detect { |row| row["Key"] == "Name" }&.fetch("Value", "") || ""
+      productNode << GcpNode.new("Internet Gateway name: #{name}")
+    end
+  end
+
+  # NAT Gateways
+  result = json_cmd("aws ec2 describe-nat-gateways --region=#{region} --output=json")
+  gateways = result.fetch("NatGateways")
+  if gateways.any?
+    productNode = GcpNode.new("NAT GAteways")
+    regionNode << productNode
+    gateways.each do |gateway|
+      creation_time = format_date(gateway.fetch("CreateTime", nil))
+      productNode << GcpNode.new("NAT Gateway created-at: #{creation_time}")
     end
   end
 
