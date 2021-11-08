@@ -158,7 +158,9 @@ regions.each do |region|
   if stacks.any?
     productNode = GcpNode.new("Cloudformation")
     regionNode << productNode
-    stacks.each do |stack|
+    stacks.reject { |stack|
+      stack.fetch("StackStatus") == "DELETE_COMPLETE"
+    }.each do |stack|
       stackName = stack.fetch("StackName")
       stackStatus = stack.fetch("StackStatus")
       productNode << GcpNode.new("Stack name: #{stackName} status: #{stackStatus}")
