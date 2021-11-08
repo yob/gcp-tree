@@ -12,22 +12,22 @@
 #
 #     aws configure
 #
-# Then, run this script with one or more regions:
+# Then, run this script:
 #
-#     ./aws-tree.rb us-east-1,us-west-1
+#     ./aws-tree.rb
 #
 # ... or, with aws-vault:
 #
-#     aws-vault exec <profile-name> -- ./aws-tree.rb us-east-1,us-west-1
+#     aws-vault exec <profile-name> -- ./aws-tree.rb
 #
 # You should get output that looks something like:
 #
 #      Account: Foo (012345678912)
-#      ├─ region: us-east-1
+#      ├─ region: us-east-1 30-day cost: $95.46
 #      │  └─ EC2
 #      │     ├─ Compute Instance name: foo-bastion id: i-23249ec type: t2.medium zone: us-east-1d IP: 1.2.3.4
 #      │     └─ Compute Instance name: bar id: i-123123ad55 type: m5.large zone: us-east-1d IP:
-#      ├─ region: us-west-1
+#      ├─ region: us-west-1 30-day cost: $2.50
 #      └─ S3
 #         ├─ Bucket foo
 #         └─ Bucket bar
@@ -39,6 +39,7 @@
 require 'json'
 require 'open3'
 require 'time'
+require 'bigdecimal'
 
 def json_cmd(cmd)
   stdout, stderr, status = Open3.capture3(cmd)
@@ -75,6 +76,41 @@ def format_date(date)
   Time.iso8601(date).strftime("%Y-%m-%d")
 end
 
+class AwsCostSummary
+
+  attr_reader :regions
+
+  def initialize(data)
+    @regions = process_data(data)
+  end
+
+  def each_significant_region(&block)
+    @regions.to_a.select { |region, cost|
+      cost > 1
+    }.reject { |region, _|
+      region == "global" || region == "NoRegion"
+    }.sort_by { |region, _|
+      region
+    }.each { |region, cost|
+      yield region, cost
+    }
+  end
+
+  private
+
+  def process_data(data)
+    regions = Hash.new(BigDecimal("0"))
+    data.fetch("ResultsByTime", []).each do |time_data|
+      time_data.fetch("Groups", []).each do |time_region_data|
+        region = time_region_data.fetch("Keys",[]).first
+        cost = BigDecimal(time_region_data.dig("Metrics","BlendedCost","Amount"))
+        regions[region] += cost
+      end
+    end
+    regions
+  end
+end
+
 class GcpNode
   attr_reader :label, :children
 
@@ -88,12 +124,11 @@ class GcpNode
   end
 end
 
-regions = ARGV[0]
-if regions.nil?
-  fatal("USAGE: aws-tree.rb <regions>")
-end
+today = Time.now
+thirty_days_ago = Time.now - (60 * 60 * 24 * 30)
 
-regions = regions.split(",")
+costs_per_region = json_cmd("aws ce get-cost-and-usage --time-period 'Start=#{thirty_days_ago.strftime('%Y-%m-%d')},End=#{today.strftime('%Y-%m-%d')}' --granularity=DAILY --metrics BlendedCost --group-by Type=DIMENSION,Key=REGION")
+summary = AwsCostSummary.new(costs_per_region)
 
 caller_identity = json_cmd("aws sts get-caller-identity --output=json")
 account_id = caller_identity.fetch("Account")
@@ -103,14 +138,14 @@ aliases = account_aliases.fetch("AccountAliases", ["unknown"]).join(",")
 
 tree = GcpNode.new("Account: #{aliases} (#{account_id})")
 
-regions.each do |region|
-
-  regionNode = GcpNode.new("region: #{region}")
+summary.each_significant_region do |region, cost|
+  puts "#{region} #{cost.round(2).to_s('F')}"
+  regionNode = GcpNode.new("region: #{region} 30-day cost: $#{cost.round(2).to_s('F')}")
   tree << regionNode
 
   # EC2
   result = json_cmd("aws ec2 describe-instances --filters Name=instance-state-name,Values=running --region=#{region} --output=json")
-  compute_instances = result.fetch("Reservations").map { |res| res.fetch("Instances") }.flatten
+  compute_instances = result.fetch("Reservations",[]).map { |res| res.fetch("Instances") }.flatten
   if compute_instances.any?
     productNode = GcpNode.new("EC2")
     regionNode << productNode
