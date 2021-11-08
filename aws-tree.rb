@@ -41,6 +41,7 @@
 
 require 'json'
 require 'open3'
+require 'time'
 
 def json_cmd(cmd)
   stdout, stderr, status = Open3.capture3(cmd)
@@ -69,6 +70,12 @@ end
 def fatal(msg)
   $stderr.puts msg
   exit(1)
+end
+
+def format_date(date)
+  return nil if date.nil?
+
+  Time.iso8601(date).strftime("%Y-%m-%d")
 end
 
 class GcpNode
@@ -116,7 +123,8 @@ regions.each do |region|
       instanceType = instance.fetch("InstanceType")
       instanceZone = instance.fetch("Placement").fetch("AvailabilityZone")
       externalIp = instance.fetch("PublicIpAddress", "")
-      productNode << GcpNode.new("Compute Instance name: #{instanceName} id: #{instanceId} type: #{instanceType} zone: #{instanceZone} IP: #{externalIp}")
+      launchTime = format_date(instance.fetch("LaunchTime", nil))
+      productNode << GcpNode.new("Compute Instance name: #{instanceName} id: #{instanceId} type: #{instanceType} zone: #{instanceZone} IP: #{externalIp} launchDate: #{launchTime}")
     end
   end
 
@@ -131,7 +139,8 @@ regions.each do |region|
       lbDns = lb.fetch("DNSName")
       lbType = lb.fetch("Type")
       lbZones = lb.fetch("AvailabilityZones", []).map { |zone| zone.fetch("ZoneName") }.join(",")
-      productNode << GcpNode.new("Load Balancer #{lbName} type: #{lbType} DNS: #{lbDns} zones: #{lbZones}")
+      createdTime = format_date(lb.fetch("CreatedTime", nil))
+      productNode << GcpNode.new("Load Balancer #{lbName} type: #{lbType} DNS: #{lbDns} zones: #{lbZones} created_at: #{createdTime}")
     end
   end
 
@@ -163,7 +172,8 @@ regions.each do |region|
     }.each do |stack|
       stackName = stack.fetch("StackName")
       stackStatus = stack.fetch("StackStatus")
-      productNode << GcpNode.new("Stack name: #{stackName} status: #{stackStatus}")
+      creation_time = format_date(stack.fetch("CreationTime", nil))
+      productNode << GcpNode.new("Stack name: #{stackName} status: #{stackStatus} creation_time: #{creation_time}")
     end
   end
 
