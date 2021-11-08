@@ -32,9 +32,6 @@
 #         ├─ Bucket foo
 #         └─ Bucket bar
 #
-# Resources we could add to the tree:
-#
-# * Route53 Zones
 
 require 'json'
 require 'open3'
@@ -283,6 +280,18 @@ if buckets.any?
   buckets.each do |bucket|
     bucketName = bucket.split(" ").last
     productNode << GcpNode.new("Bucket #{bucketName}")
+  end
+end
+
+# Route53 Hosted Zones
+result = json_cmd("aws route53 list-hosted-zones --output=json")
+zones = result.fetch("HostedZones")
+if zones.any?
+  productNode = GcpNode.new("Route53 Hosted Zones")
+  tree << productNode
+  zones.each do |zone|
+    name = zone.fetch("Name")
+    productNode << GcpNode.new("Zone #{name}")
   end
 end
 
