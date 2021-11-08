@@ -139,7 +139,6 @@ aliases = account_aliases.fetch("AccountAliases", ["unknown"]).join(",")
 tree = GcpNode.new("Account: #{aliases} (#{account_id})")
 
 summary.each_significant_region do |region, cost|
-  puts "#{region} #{cost.round(2).to_s('F')}"
   regionNode = GcpNode.new("region: #{region} 30-day cost: $#{cost.round(2).to_s('F')}")
   tree << regionNode
 
