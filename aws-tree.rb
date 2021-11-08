@@ -111,7 +111,7 @@ regions.each do |region|
     productNode = GcpNode.new("EC2")
     regionNode << productNode
     compute_instances.each do |instance|
-      instanceName = instance.fetch("Tags", []).detect { |row| row["Key"] == "Name" }.fetch("Value", "")
+      instanceName = instance.fetch("Tags", []).detect { |row| row["Key"] == "Name" }&.fetch("Value", "") || ""
       instanceId = instance.fetch("InstanceId")
       instanceType = instance.fetch("InstanceType")
       instanceZone = instance.fetch("Placement").fetch("AvailabilityZone")
