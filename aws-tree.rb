@@ -37,7 +37,6 @@
 # * Route53 Zones
 # * VPCs
 # * Internet Gateways and NAT
-# * ECS clusters
 
 require 'json'
 require 'open3'
@@ -186,6 +185,21 @@ regions.each do |region|
     addresses.each do |address|
       ip = address.fetch("PublicIp")
       productNode << GcpNode.new("Elastic IP #{ip}")
+    end
+  end
+
+  # ECS Clusters
+  result = json_cmd("aws ecs list-clusters --region=#{region} --output=json")
+  arns = result.fetch("clusterArns")
+  if arns.any?
+    productNode = GcpNode.new("ECS Clusters")
+    regionNode << productNode
+    arns.each do |arn|
+      cluster = json_cmd("aws ecs describe-clusters --cluster='#{arn}' --region=#{region} --output=json").fetch("clusters", []).first
+      name = cluster.fetch("clusterName")
+      serviceCount = cluster.fetch("activeServicesCount")
+      runningTaskCount = cluster.fetch("runningTasksCount")
+      productNode << GcpNode.new("ECS Cluster name: #{name} services: #{serviceCount} running-tasks: #{runningTaskCount}")
     end
   end
 
