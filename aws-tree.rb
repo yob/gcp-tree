@@ -232,6 +232,20 @@ summary.each_significant_region do |region, cost|
     end
   end
 
+  # Lambda functions
+  result = json_cmd("aws lambda list-functions --region=#{region} --output=json")
+  functions = result.fetch("Functions")
+  if functions.any?
+    productNode = GcpNode.new("Lambda")
+    regionNode << productNode
+    functions.each do |function|
+      name = function.fetch("FunctionName")
+      runtime = function.fetch("Runtime")
+      updated_at = format_date(function.fetch("LastModified", nil))
+      productNode << GcpNode.new("Function name: #{name} runtime: #{runtime} updated-at: #{updated_at}")
+    end
+  end
+
   # VPCs
   result = json_cmd("aws ec2 describe-vpcs --region=#{region} --output=json")
   vpcs = result.fetch("Vpcs")
@@ -268,7 +282,6 @@ summary.each_significant_region do |region, cost|
       productNode << GcpNode.new("NAT Gateway created-at: #{creation_time}")
     end
   end
-
 end
 
 # S3
