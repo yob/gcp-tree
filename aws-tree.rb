@@ -44,7 +44,7 @@ def json_cmd(cmd)
   if status.success?
     JSON.parse(stdout)
   else
-    []
+    raise stderr.inspect
   end
 rescue JSON::ParserError
   []
