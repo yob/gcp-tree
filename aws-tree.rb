@@ -232,6 +232,21 @@ summary.each_significant_region do |region, cost|
     end
   end
 
+  # EKS Clusters
+  result = json_cmd("aws eks list-clusters --region=#{region} --output=json")
+  names = result.fetch("clusters")
+  if names.any?
+    productNode = GcpNode.new("EKS Clusters")
+    regionNode << productNode
+    names.each do |name|
+      cluster = json_cmd("aws eks describe-cluster --name='#{name}' --region=#{region} --output=json").fetch("cluster", {})
+      puts cluster.inspect
+      name = cluster.fetch("name")
+      version = cluster.fetch("version")
+      productNode << GcpNode.new("EKS Cluster name: #{name} version: #{version}")
+    end
+  end
+
   # Lambda functions
   result = json_cmd("aws lambda list-functions --region=#{region} --output=json")
   functions = result.fetch("Functions")
