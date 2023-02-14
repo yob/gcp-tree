@@ -240,7 +240,6 @@ summary.each_significant_region do |region, cost|
     regionNode << productNode
     names.each do |name|
       cluster = json_cmd("aws eks describe-cluster --name='#{name}' --region=#{region} --output=json").fetch("cluster", {})
-      puts cluster.inspect
       name = cluster.fetch("name")
       version = cluster.fetch("version")
       productNode << GcpNode.new("EKS Cluster name: #{name} version: #{version}")
