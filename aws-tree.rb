@@ -296,6 +296,50 @@ summary.each_significant_region do |region, cost|
       productNode << GcpNode.new("NAT Gateway created-at: #{creation_time}")
     end
   end
+
+  # API Gateways
+  result = json_cmd("aws apigateway get-rest-apis --region=#{region} --output=json")
+  apis = result.fetch("items")
+  if apis.any?
+    productNode = GcpNode.new("API Gateways")
+    regionNode << productNode
+    apis.each do |api|
+      id = api.fetch("id")
+      name = api.fetch("name")
+      created_time = format_date(api.fetch("createdDate", nil))
+      productNode << GcpNode.new("API name: #{name} ID: #{id} created-at: #{created_time}")
+    end
+  end
+
+  # API Gateway Custom Domains
+  result = json_cmd("aws apigateway get-domain-names --region=#{region} --output=json")
+  domains = result.fetch("items")
+  if domains.any?
+    productNode = GcpNode.new("API Gateway Custom Domains")
+    regionNode << productNode
+    domains.each do |domain|
+      name = domain.fetch("domainName")
+      productNode << GcpNode.new("API Gateway Domain name: #{name}")
+    end
+  end
+
+  # Cloudfront Distributions all exist in us-east-1 (AKA "Global")
+  if region == "us-east-1"
+    result = json_cmd("aws cloudfront list-distributions --region=#{region} --output=json")
+    distributions = result.dig("DistributionList","Items")
+    if distributions.any?
+      productNode = GcpNode.new("Cloudfront Distributions")
+      regionNode << productNode
+      distributions.each do |dist|
+        last_updated_time = format_date(dist.fetch("LastModifiedTime", nil))
+        id = dist.fetch("Id")
+        aliases = dist.fetch("Aliases",{}).fetch("Items", [])
+        wafEnabled = dist.fetch("WebACLId","").size > 0
+        ipv6enabled = dist.fetch("IsIPV6Enabled") == true
+        productNode << GcpNode.new("Distribution ID: #{id} last-updated-at: #{last_updated_time} waf: #{wafEnabled} ipv6: #{ipv6enabled} aliases: #{aliases.join(",")}")
+      end
+    end
+  end
 end
 
 # S3
