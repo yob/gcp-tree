@@ -254,7 +254,7 @@ summary.each_significant_region do |region, cost|
     regionNode << productNode
     functions.each do |function|
       name = function.fetch("FunctionName")
-      runtime = function.fetch("Runtime")
+      runtime = function.fetch("Runtime", "Unknown")
       updated_at = format_date(function.fetch("LastModified", nil))
       productNode << GcpNode.new("Function name: #{name} runtime: #{runtime} updated-at: #{updated_at}")
     end
