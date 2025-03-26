@@ -273,7 +273,7 @@ summary.each_significant_region do |region, cost|
     end
   end
 
-  # Intenet Gateways
+  # Internet Gateways
   result = json_cmd("aws ec2 describe-internet-gateways --region=#{region} --output=json")
   gateways = result.fetch("InternetGateways")
   if gateways.any?
